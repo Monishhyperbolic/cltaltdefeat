@@ -13,7 +13,7 @@ st.title("🤖 AI-Powered Content Analysis & Recommendation System with Explaina
 st.markdown("Explore embeddings, apply PCA, get recommendations, and explain them with SHAP!")
 
 # Load embeddings directly from the bundled CSV
-embeddings = pd.read_csv("embeddings.csv", header=None)
+embeddings = pd.read_csv("pca_3d_embeddings.csv", header=None)
 st.write("### Raw Embeddings Data", embeddings)
 
 # PCA Components selector
