@@ -14,7 +14,7 @@ st.markdown("Enter text or tags, and get top recommended articles!")
 
 # Helper function to load CSV from Google Drive
 def load_csv_from_gdrive(file_id):
-    url = f'https://drive.google.com/uc?id={1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m}'
+    url = f'https://drive.google.com/uc?id=1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m'
     response = requests.get(url)
     return pd.read_csv(io.StringIO(response.content.decode('utf-8')))
 
