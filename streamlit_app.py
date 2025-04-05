@@ -10,34 +10,40 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Article Recommendation System", layout="wide")
 st.title("📰 Smart Article Recommender")
 st.markdown("Enter text or tags, and get top recommended articles!")
+# === CONFIG ===
+# ✅ REPLACE with your actual Google Drive file IDs:
+ARTICLES_CSV_ID = '1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m'      # Example: Articles CSV file ID
+EMBEDDINGS_CSV_ID = '1sWffA9H9n1tFoZT3zh0TBTtPlqvGjYH4'    # Example: Embeddings CSV file ID
 
-# Helper function to load CSV from Google Drive
-def load_csv_from_gdrive(file_id, output):
-    url = f'https://drive.google.com/uc?id={file_id}'
-    gdown.download(url, output, quiet=False)
-    return pd.read_csv(output)
+# === HELPER FUNCTIONS ===
 
-# Load data
+def load_csv_from_gdrive(file_id, output_filename):
+    url = f'https://drive.google.com/uc?id={17we77-DBgOd4_MzsUV_pVd6SJ1CSjC1e}'
+    gdown.download(url, output_filename, quiet=False)
+    return pd.read_csv(output_filename)
+
 @st.cache_data
 def load_data():
-    # ✅ Replace with your actual file IDs
-    csv_file_id = '1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m'  # Articles CSV
-    embeddings_file_id = '1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m'  # <- Add your ID!
+    df = load_csv_from_gdrive(ARTICLES_CSV_ID, 'articles.csv')
+    embeddings_df = load_csv_from_gdrive(EMBEDDINGS_CSV_ID, 'embeddings.csv')
 
-    df = load_csv_from_gdrive(csv_file_id, 'articles.csv')
-    embeddings = load_csv_from_gdrive(embeddings_file_id, 'embeddings.csv').values
+    # Validate embeddings
+    embeddings = embeddings_df.values
+    if not np.issubdtype(embeddings.dtype, np.number):
+        st.error("🚨 Embeddings file is invalid. Please upload a valid numeric embeddings CSV.")
+        st.stop()
+
     return df, embeddings
 
 df, embeddings = load_data()
 
-# Load embedding model
 @st.cache_resource
 def load_model():
     return SentenceTransformer('all-MiniLM-L6-v2')
 
 model = load_model()
 
-# User input
+# === USER INPUT ===
 st.subheader("Enter your search query")
 user_input = st.text_input("Enter keywords, tags, or text:", placeholder="e.g., AI climate research")
 
@@ -45,17 +51,17 @@ if user_input:
     # Embed user input
     user_embedding = model.encode([user_input])
 
-    # Reduce user embedding to match PCA shape
+    # Reduce user embedding to match embeddings shape
     user_embedding_reduced = user_embedding[:, :embeddings.shape[1]]
 
     # Calculate cosine similarity
     similarities = cosine_similarity(user_embedding_reduced, embeddings).flatten()
 
-    # Get top 5 indices
+    # Get top N recommendations
     top_n = 5
     top_indices = similarities.argsort()[-top_n:][::-1]
 
-    # Show results
+    # Display recommendations
     st.subheader(f"🔍 Top {top_n} Recommendations")
     for idx in top_indices:
         article = df.iloc[idx]
@@ -66,7 +72,7 @@ if user_input:
         st.markdown(f"{article['text'][:300]}...")  # show snippet
         st.markdown("---")
 
-    # Optional: Visualize similarity scores
+    # Optional: Similarity scores bar chart
     fig, ax = plt.subplots()
     ax.bar(range(top_n), similarities[top_indices], tick_label=[f"Doc {i+1}" for i in range(top_n)])
     ax.set_ylabel("Cosine Similarity")
@@ -76,6 +82,6 @@ if user_input:
 else:
     st.info("Please enter a query to get recommendations.")
 
-# Footer
+# === FOOTER ===
 st.markdown("---")
 st.markdown("Built with ❤️ by Team clt+alt+defeat")
