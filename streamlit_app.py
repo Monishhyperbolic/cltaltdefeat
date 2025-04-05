@@ -13,12 +13,11 @@ st.set_page_config(page_title="AI-Powered Content Recommendation with SHAP", lay
 st.title("🤖 AI-Powered Content Analysis & Recommendation System with Explainability")
 st.markdown("Upload your embeddings CSV, apply PCA, get recommendations, and explain them with SHAP!")
 
-# Upload embeddings
-uploaded_file = st.file_uploader("Upload your embeddings CSV file", type=["csv"])
+    # Upload embeddings
+    # Load embeddings directly from the bundled CSV
+    embeddings = pd.read_csv("embeddings.csv", header=None)
+    st.write("### Raw Embeddings Data", embeddings)
 
-if uploaded_file is not None:
-    # Load embeddings
-    embeddings = pd.read_csv(uploaded_file, header=None)
     st.write("### Raw Embeddings Data", embeddings)
 
     # PCA Components selector
