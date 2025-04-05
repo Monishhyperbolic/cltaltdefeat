@@ -10,10 +10,11 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Article Recommendation System", layout="wide")
 st.title("📰 Smart Article Recommender")
 st.markdown("Enter text or tags, and get top recommended articles!")
+
 # === CONFIG ===
-# ✅ REPLACE with your actual Google Drive file IDs:
-ARTICLES_CSV_ID = '1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m'      # Example: Articles CSV file ID
-EMBEDDINGS_CSV_ID = '1sWffA9H9n1tFoZT3zh0TBTtPlqvGjYH4'    # Example: Embeddings CSV file ID
+# ✅ Your actual Google Drive file IDs:
+ARTICLES_CSV_ID = '1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m'        # data_cleaned3.csv
+EMBEDDINGS_CSV_ID = '1sWffA9H9n1tFoZT3zh0TBTtPlqvGjYH4'      # pca_3d_embeddings.csv
 
 # === HELPER FUNCTIONS ===
 
@@ -24,8 +25,8 @@ def load_csv_from_gdrive(file_id, output_filename):
 
 @st.cache_data
 def load_data():
-    df = load_csv_from_gdrive(ARTICLES_CSV_ID, 'articles.csv')
-    embeddings_df = load_csv_from_gdrive(EMBEDDINGS_CSV_ID, 'embeddings.csv')
+    df = load_csv_from_gdrive(ARTICLES_CSV_ID, 'data_cleaned3.csv')
+    embeddings_df = load_csv_from_gdrive(EMBEDDINGS_CSV_ID, 'pca_3d_embeddings.csv')
 
     # Validate embeddings
     embeddings = embeddings_df.values
