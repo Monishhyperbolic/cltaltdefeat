@@ -19,7 +19,7 @@ EMBEDDINGS_CSV_ID = '1sWffA9H9n1tFoZT3zh0TBTtPlqvGjYH4'      # pca_3d_embeddings
 # === HELPER FUNCTIONS ===
 
 def load_csv_from_gdrive(file_id, output_filename):
-    url = f'https://drive.google.com/uc?id={17we77-DBgOd4_MzsUV_pVd6SJ1CSjC1e}'
+    url = f'https://drive.google.com/uc?id={file_id}'
     gdown.download(url, output_filename, quiet=False)
     return pd.read_csv(output_filename)
 
