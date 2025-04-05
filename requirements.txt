@@ -1,6 +1,7 @@
 streamlit
+shap
+sentence-transformers
 scikit-learn
 pandas
 numpy
 matplotlib
-shap
