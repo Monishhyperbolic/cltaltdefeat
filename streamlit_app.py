@@ -1,98 +1,87 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
+import requests
+import io
 from sklearn.metrics.pairwise import cosine_similarity
-import shap
+from sentence_transformers import SentenceTransformer
 import matplotlib.pyplot as plt
 
-# Streamlit page config
-st.set_page_config(page_title="AI-Powered Content Recommendation with SHAP", layout="wide")
-st.title("🤖 AI-Powered Content Analysis & Recommendation System with Explainability")
-st.markdown("Explore embeddings, apply PCA, get recommendations, and explain them with SHAP!")
+# Page config
+st.set_page_config(page_title="Article Recommendation System", layout="wide")
+st.title("📰 Smart Article Recommender")
+st.markdown("Enter text or tags, and get top recommended articles!")
 
-# Load embeddings directly from the bundled CSV
-embeddings = pd.read_csv("pca_3d_embeddings.csv", header=None)
-st.write("### Raw Embeddings Data", embeddings)
+# Helper function to load CSV from Google Drive
+def load_csv_from_gdrive(file_id):
+    url = f'https://drive.google.com/uc?id={1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m}'
+    response = requests.get(url)
+    return pd.read_csv(io.StringIO(response.content.decode('utf-8')))
 
-# PCA Components selector
-n_components = st.slider("Select number of PCA components", min_value=2, max_value=min(embeddings.shape[1], 10), value=3)
+# Helper function to load embeddings CSV from GitHub
+def load_csv_from_github(raw_url):
+    response = requests.get(raw_url)
+    return pd.read_csv(io.StringIO(response.content.decode('utf-8'))).values  # Convert to NumPy array
 
-# Scale + PCA
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(embeddings)
-pca = PCA(n_components=n_components)
-X_pca = pca.fit_transform(X_scaled)
-pca_df = pd.DataFrame(X_pca, columns=[f'PC{i+1}' for i in range(n_components)])
+# Load data
+@st.cache_data
+def load_data():
+    # 🔗 Replace with your actual IDs and URLs
+    csv_file_id = 'YOUR_GOOGLE_DRIVE_FILE_ID'  # Replace this
+    github_embeddings_url = 'https://github.com/Monishhyperbolic/cltaltdefeat/blob/main/pca_3d_embeddings.csv'  # Replace this
+    
+    df = load_csv_from_gdrive(csv_file_id)
+    embeddings = load_csv_from_github(github_embeddings_url)
+    return df, embeddings
 
-st.write("### PCA Reduced Data", pca_df)
+df, embeddings = load_data()
+
+# Load embedding model
+@st.cache_resource
+def load_model():
+    return SentenceTransformer('all-MiniLM-L6-v2')
+
+model = load_model()
 
 # User input
-st.subheader("🔍 Find Similar Content")
-user_input = st.text_area("Enter your input vector (comma-separated numbers):", "0.1, 0.2, -0.3")
+st.subheader("Enter your search query")
+user_input = st.text_input("Enter keywords, tags, or text:", placeholder="e.g., AI climate research")
 
-try:
-    user_vector = np.array([float(i) for i in user_input.split(",")]).reshape(1, -1)
-    user_vector_scaled = scaler.transform(user_vector)
-    user_vector_pca = pca.transform(user_vector_scaled)
+if user_input:
+    # Embed user input
+    user_embedding = model.encode([user_input])
 
-    # Cosine similarity
-    similarities = cosine_similarity(user_vector_pca, X_pca).flatten()
-    top_n = st.slider("Select number of recommendations", 1, 20, 5)
+    # Reduce user embedding to match PCA shape
+    user_embedding_reduced = user_embedding[:, :embeddings.shape[1]]
+
+    # Calculate cosine similarity
+    similarities = cosine_similarity(user_embedding_reduced, embeddings).flatten()
+
+    # Get top 5 indices
+    top_n = 5
     top_indices = similarities.argsort()[-top_n:][::-1]
 
-    st.write(f"### 🏆 Top {top_n} Recommendations")
-    recs = embeddings.iloc[top_indices]
-    st.write(recs)
+    # Show results
+    st.subheader(f"🔍 Top {top_n} Recommendations")
+    for idx in top_indices:
+        article = df.iloc[idx]
+        st.markdown(f"### {article['title']}")
+        st.markdown(f"**Authors:** {article['authors']}")
+        st.markdown(f"**Date:** {article['timestamp']}")
+        st.markdown(f"**Tags:** {article['tags']}")
+        st.markdown(f"{article['text'][:300]}...")  # show snippet
+        st.markdown("---")
 
-    # Visualization
+    # Optional: Visualize similarity scores
     fig, ax = plt.subplots()
-    ax.scatter(pca_df['PC1'], pca_df['PC2'], alpha=0.3, label='Content')
-    ax.scatter(pca_df.iloc[top_indices]['PC1'], pca_df.iloc[top_indices]['PC2'], color='red', label='Recommended', s=100)
-    ax.scatter(user_vector_pca[:, 0], user_vector_pca[:, 1], color='green', label='Your Input', s=100, marker='X')
-    ax.legend()
-    ax.set_title('PCA Visualization with Recommendations')
+    ax.bar(range(top_n), similarities[top_indices], tick_label=[f"Doc {i+1}" for i in range(top_n)])
+    ax.set_ylabel("Cosine Similarity")
+    ax.set_title("Top Similarity Scores")
     st.pyplot(fig)
 
-    # SHAP Explainability
-    st.subheader("🔍 SHAP Explainability of Recommendations")
-
-    # Define a simple model: cosine similarity function
-    def similarity_model(X):
-        return cosine_similarity(X, user_vector_pca)
-
-    # Initialize SHAP explainer
-    explainer = shap.Explainer(similarity_model, X_pca)
-    shap_values = explainer(X_pca)
-
-    # Visualize SHAP for top recommendation
-    st.write("### 🔬 SHAP Explanation for Top Recommendation")
-    shap.plots.bar(shap_values[top_indices[0]], show=False)
-    st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-
-    # Optional: Waterfall plot for deeper explanation
-    st.write("### 💧 Detailed Waterfall Plot")
-    fig, ax = plt.subplots()
-    shap.plots.waterfall(shap_values[top_indices[0]], show=False)
-    st.pyplot(fig)
-
-except Exception as e:
-    st.error(f"Error processing input: {e}")
-
-# Download PCA CSV
-st.subheader("⬇️ Download PCA Data")
-def convert_df(df):
-    return df.to_csv(index=False).encode('utf-8')
-
-csv = convert_df(pca_df)
-st.download_button(
-    label="Download PCA CSV",
-    data=csv,
-    file_name='embeddings_pca.csv',
-    mime='text/csv',
-)
+else:
+    st.info("Please enter a query to get recommendations.")
 
 # Footer
 st.markdown("---")
-st.markdown("Built for **Codrelate 2025** 🚀 | By Team clt+alt+defeat")
+st.markdown("Built with ❤️ by Team clt+alt+defeat")
