@@ -27,7 +27,7 @@ def load_csv_from_github(raw_url):
 @st.cache_data
 def load_data():
     # 🔗 Replace with your actual IDs and URLs
-    csv_file_id = 'YOUR_GOOGLE_DRIVE_FILE_ID'  # Replace this
+    csv_file_id = '1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m'  # Replace this
     github_embeddings_url = 'https://github.com/Monishhyperbolic/cltaltdefeat/blob/main/pca_3d_embeddings.csv'  # Replace this
     
     df = load_csv_from_gdrive(csv_file_id)
