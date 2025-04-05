@@ -18,17 +18,18 @@ def load_csv_from_gdrive(file_id):
     response = requests.get(url)
     return pd.read_csv(io.StringIO(response.content.decode('utf-8')))
 
-# Helper function to load embeddings CSV from GitHub
-def load_csv_from_github(raw_url):
-    response = requests.get(raw_url)
-    return pd.read_csv(io.StringIO(response.content.decode('utf-8'))).values  # Convert to NumPy array
 
+
+def load_csv_from_github(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    return pd.read_csv(io.StringIO(response.text)).values
 # Load data
 @st.cache_data
 def load_data():
     # 🔗 Replace with your actual IDs and URLs
     csv_file_id = '1raHQ1RYkCbhlzQSUuhuBq617DxDesA1m'  # Replace this
-    github_embeddings_url = 'https://github.com/Monishhyperbolic/cltaltdefeat/blob/main/pca_3d_embeddings.csv'  # Replace this
+    github_embeddings_url = "https://raw.githubusercontent.com/yourname/repo/main/pca_3d_embeddings.csv"  # Replace this
     
     df = load_csv_from_gdrive(csv_file_id)
     embeddings = load_csv_from_github(github_embeddings_url)
