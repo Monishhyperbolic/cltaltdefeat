@@ -4,13 +4,12 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import cosine_similarity
-import shap
 import matplotlib.pyplot as plt
 
 # Streamlit page config
-st.set_page_config(page_title="AI-Powered Content Recommendation with SHAP", layout="wide")
-st.title("🤖 AI-Powered Content Analysis & Recommendation System with Explainability")
-st.markdown("Explore embeddings, apply PCA, get recommendations, and explain them with SHAP!")
+st.set_page_config(page_title="AI-Powered Content Recommendation", layout="wide")
+st.title("🤖 AI-Powered Content Analysis & Recommendation System")
+st.markdown("Explore embeddings, apply PCA, and get recommendations!")
 
 # Load embeddings directly from the bundled CSV
 embeddings = pd.read_csv("pca_3d_embeddings.csv", header=None)
@@ -53,28 +52,6 @@ try:
     ax.scatter(user_vector_pca[:, 0], user_vector_pca[:, 1], color='green', label='Your Input', s=100, marker='X')
     ax.legend()
     ax.set_title('PCA Visualization with Recommendations')
-    st.pyplot(fig)
-
-    # SHAP Explainability
-    st.subheader("🔍 SHAP Explainability of Recommendations")
-
-    # Define a simple model: cosine similarity function
-    def similarity_model(X):
-        return cosine_similarity(X, user_vector_pca)
-
-    # Initialize SHAP explainer
-    explainer = shap.Explainer(similarity_model, X_pca)
-    shap_values = explainer(X_pca)
-
-    # Visualize SHAP for top recommendation
-    st.write("### 🔬 SHAP Explanation for Top Recommendation")
-    shap.plots.bar(shap_values[top_indices[0]], show=False)
-    st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-
-    # Optional: Waterfall plot for deeper explanation
-    st.write("### 💧 Detailed Waterfall Plot")
-    fig, ax = plt.subplots()
-    shap.plots.waterfall(shap_values[top_indices[0]], show=False)
     st.pyplot(fig)
 
 except Exception as e:
